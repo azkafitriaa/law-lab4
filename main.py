@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
 from database import SessionLocal, engine, Base
 from pydantic import BaseModel 
 from models import Book
@@ -53,7 +53,6 @@ def update_book(id: int, book: BookRequest, db: Session = Depends(get_db)):
         db.refresh(db_book)
         return db_book
     return HTTPException(status_code=404, detail=f"Book with id {id} not found")
-    
 
 @app.delete("/delete-book/{id}")
 def delete_book(id: int, db: Session = Depends(get_db)):
@@ -63,3 +62,11 @@ def delete_book(id: int, db: Session = Depends(get_db)):
         db.commit()
         return {"message": f"Book with id {id} successfully deleted"}
     raise HTTPException(status_code=404, detail=f"Book with id {id} not found")
+
+@app.post("/upload-bookfile")
+async def upload_bookfile(bookfile: UploadFile = File(...)):
+    file_name = bookfile.filename
+    with open('./bookfiles/' + file_name, 'wb') as file:
+        file_content = await bookfile.read()
+        file.write(file_content)
+    return {"message" : f"File {file_name} successfully uploaded"}
